@@ -120,9 +120,9 @@ module "alb" {
 module "cognito" {
   source = "../../modules/cognito"
 
-  app_name     = local.app_name
-  callback_url = "https://${local.domain}/callback"
-  logout_url   = "https://${local.domain}"
+  app_name      = local.app_name
+  callback_urls = ["https://${local.domain}/callback", "http://localhost:3000/callback"]
+  logout_urls   = ["https://${local.domain}", "http://localhost:3000"]
 }
 
 # ── RDS ──────────────────────────────────────────────────────────────────────

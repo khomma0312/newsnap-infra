@@ -26,6 +26,8 @@ newsnap-infra/
 ## 使い方
 
 ```bash
+# 適用したい環境のディレクトリに移動する
+cd environment/<環境名>
 terraform init
 terraform plan
 terraform apply

@@ -1,6 +1,8 @@
 resource "aws_cognito_user_pool" "main" {
   name = "${var.app_name}-user-pool"
 
+  username_attributes = ["email"]
+
   password_policy {
     minimum_length                   = 8
     require_uppercase                = true
@@ -36,11 +38,11 @@ resource "aws_cognito_user_pool_client" "main" {
   allowed_oauth_scopes                 = ["openid", "email", "profile"]
   allowed_oauth_flows_user_pool_client = true
 
-  callback_urls = [var.callback_url]
-  logout_urls   = [var.logout_url]
+  callback_urls = var.callback_urls
+  logout_urls   = var.logout_urls
 
   generate_secret     = true
-  explicit_auth_flows = ["ALLOW_REFRESH_TOKEN_AUTH"]
+  explicit_auth_flows = ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
 }
 
 resource "aws_secretsmanager_secret" "cognito_client_secret" {
@@ -74,11 +76,11 @@ resource "aws_ssm_parameter" "cognito_domain" {
 resource "aws_ssm_parameter" "cognito_redirect_uri" {
   name  = "/${var.app_name}/cognito/redirect_uri"
   type  = "String"
-  value = var.callback_url
+  value = var.callback_urls[0]
 }
 
 resource "aws_ssm_parameter" "frontend_url" {
   name  = "/${var.app_name}/app/frontend_url"
   type  = "String"
-  value = var.logout_url
+  value = var.logout_urls[0]
 }
