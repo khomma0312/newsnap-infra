@@ -19,15 +19,15 @@ mainSteps:
         commands:
           - |
             ADMIN_PASSWORD=$(aws secretsmanager get-secret-value \
-              --secret-id ${admin_secret_id} \
+              --secret-id ${admin_secret_arn} \
               --query SecretString \
               --output text | jq -r .password)
             ADMIN_USER=$(aws secretsmanager get-secret-value \
-              --secret-id ${admin_secret_id} \
+              --secret-id ${admin_secret_arn} \
               --query SecretString \
               --output text | jq -r .username)
             PGPASSWORD="$ADMIN_PASSWORD" psql -h ${rds_endpoint} -U $ADMIN_USER -d ${db_name} \
               -c "CREATE USER {{ NewUsername }} WITH PASSWORD '{{ NewUserPassword }}';"
             aws secretsmanager put-secret-value \
-              --secret-id ${app_secret_id} \
+              --secret-id ${app_secret_arn} \
               --secret-string "{\"username\":\"{{ NewUsername }}\",\"password\":\"{{ NewUserPassword }}\"}"

@@ -138,6 +138,41 @@ module "rds" {
   db_admin_user     = local.db_admin_user
 }
 
+# ── Bastion ───────────────────────────────────────────────────────────────────
+
+module "bastion" {
+  source = "../../modules/bastion"
+
+  app_name              = local.app_name
+  vpc_id                = module.vpc.vpc_id
+  subnet_id             = module.vpc.private_subnet_ids[0]
+  rds_security_group_id = module.vpc.rds_security_group_id
+  admin_secret_arn      = module.rds.db_admin_credentials_secret_arn
+  app_secret_arn        = module.rds.db_app_credentials_secret_arn
+}
+
+# ── SSM Runbook ───────────────────────────────────────────────────────────────
+
+module "ssm_runbook" {
+  source = "../../modules/ssm_runbook"
+
+  app_name         = local.app_name
+  instance_id      = module.bastion.instance_id
+  admin_secret_arn = module.rds.db_admin_credentials_secret_arn
+  app_secret_arn   = module.rds.db_app_credentials_secret_arn
+  rds_endpoint     = module.rds.db_endpoint
+  db_name          = local.db_name
+}
+
+# ── Bastion Stop Scheduler（毎日 23:00 JST に自動停止）──────────────────────────
+
+module "bastion_scheduler" {
+  source = "../../modules/bastion_scheduler"
+
+  app_name            = local.app_name
+  bastion_instance_id = module.bastion.instance_id
+}
+
 # ── RDS Stop Scheduler（dev only: 毎週月曜 00:00 JST に自動停止）─────────────────
 
 module "rds_scheduler" {
@@ -167,6 +202,20 @@ module "ecs" {
   cognito_redirect_uri_param_arn = module.cognito.redirect_uri_param_arn
   frontend_url_param_arn         = module.cognito.frontend_url_param_arn
   security_group_id              = module.vpc.ecs_security_group_id
+}
+
+# ── ECS Migration ────────────────────────────────────────────────────────────
+
+module "ecs_migration" {
+  source = "../../modules/ecs_migration"
+
+  app_name                      = local.app_name
+  aws_region                    = local.aws_region
+  vpc_id                        = module.vpc.vpc_id
+  rds_security_group_id         = module.vpc.rds_security_group_id
+  db_host_param_arn             = module.rds.db_host_param_arn
+  db_name_param_arn             = module.rds.db_name_param_arn
+  db_app_credentials_secret_arn = module.rds.db_app_credentials_secret_arn
 }
 
 # ── CloudFront ────────────────────────────────────────────────────────────────

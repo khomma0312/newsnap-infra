@@ -7,8 +7,8 @@ variable "instance_id" {
   type        = string
 }
 
-variable "admin_secret_id" {
-  description = "RDS管理者の認証情報が格納されたSecrets ManagerのシークレットID"
+variable "admin_secret_arn" {
+  description = "RDS管理者の認証情報が格納されたSecrets ManagerシークレットのARN"
   type        = string
 }
 
@@ -22,7 +22,7 @@ variable "db_name" {
   type        = string
 }
 
-variable "app_secret_id" {
-  description = "RDSアプリユーザーの認証情報が格納されたSecrets ManagerのシークレットID"
+variable "app_secret_arn" {
+  description = "RDSアプリユーザーの認証情報が格納されたSecrets ManagerシークレットのARN"
   type        = string
 }

@@ -47,6 +47,27 @@ resource "aws_iam_role_policy_attachment" "bastion_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy" "bastion_secretsmanager" {
+  name = "secretsmanager"
+  role = aws_iam_role.bastion.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = var.admin_secret_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue", "secretsmanager:PutSecretValue"]
+        Resource = var.app_secret_arn
+      },
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "bastion" {
   name = "${var.app_name}-bastion"
   role = aws_iam_role.bastion.name
@@ -64,7 +85,7 @@ resource "aws_instance" "bastion" {
 
   user_data = <<-EOF
     #!/bin/bash
-    dnf install -y postgresql15
+    dnf install -y postgresql15 jq
   EOF
 
   user_data_replace_on_change = true
