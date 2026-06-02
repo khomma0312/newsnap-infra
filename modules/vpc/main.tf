@@ -151,13 +151,16 @@ resource "aws_security_group" "ecs" {
 resource "aws_security_group" "rds" {
   name   = "${var.app_name}-rds"
   vpc_id = aws_vpc.main.id
+}
 
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
-  }
+resource "aws_security_group_rule" "rds_from_ecs" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.rds.id
+  source_security_group_id = aws_security_group.ecs.id
+  description              = "Allow ECS to connect to RDS"
 }
 
 # ── S3 Gateway Endpoint（無料・ECRイメージレイヤーのNATデータ処理費を節約）──

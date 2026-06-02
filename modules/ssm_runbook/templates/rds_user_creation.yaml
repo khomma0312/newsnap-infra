@@ -27,8 +27,14 @@ mainSteps:
               --secret-id ${admin_secret_arn} \
               --query SecretString \
               --output text | jq -r .username)
-            PGPASSWORD="$ADMIN_PASSWORD" psql -h ${rds_endpoint} -U $ADMIN_USER -d ${db_name} \
-              -c "CREATE USER {{ NewUsername }} WITH PASSWORD '{{ NewUserPassword }}';"
+            SQL="CREATE USER {{ NewUsername }} WITH PASSWORD '{{ NewUserPassword }}';
+            GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO {{ NewUsername }};
+            GRANT ALL ON SCHEMA public TO {{ NewUsername }};
+            GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {{ NewUsername }};
+            GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {{ NewUsername }};
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {{ NewUsername }};
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {{ NewUsername }};"
+            PGPASSWORD="$ADMIN_PASSWORD" psql -h ${rds_endpoint} -U $ADMIN_USER -d ${db_name} -c "$SQL"
             aws secretsmanager put-secret-value \
               --secret-id ${app_secret_arn} \
               --secret-string "{\"username\":\"{{ NewUsername }}\",\"password\":\"{{ NewUserPassword }}\"}"
