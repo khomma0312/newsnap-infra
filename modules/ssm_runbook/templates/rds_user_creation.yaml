@@ -1,0 +1,33 @@
+# templates/rds_user_creation.yaml
+schemaVersion: '0.3'
+description: 'RDS user creation via Bastion'
+parameters:
+  NewUsername:
+    type: String
+    description: 'Username to create'
+  NewUserPassword:
+    type: String
+    description: 'Password for the new user'
+mainSteps:
+  - name: CreateRdsUser
+    action: aws:runCommand
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '${instance_id}'
+      Parameters:
+        commands:
+          - |
+            ADMIN_PASSWORD=$(aws secretsmanager get-secret-value \
+              --secret-id ${admin_secret_id} \
+              --query SecretString \
+              --output text | jq -r .password)
+            ADMIN_USER=$(aws secretsmanager get-secret-value \
+              --secret-id ${admin_secret_id} \
+              --query SecretString \
+              --output text | jq -r .username)
+            PGPASSWORD="$ADMIN_PASSWORD" psql -h ${rds_endpoint} -U $ADMIN_USER -d ${db_name} \
+              -c "CREATE USER {{ NewUsername }} WITH PASSWORD '{{ NewUserPassword }}';"
+            aws secretsmanager put-secret-value \
+              --secret-id ${app_secret_id} \
+              --secret-string "{\"username\":\"{{ NewUsername }}\",\"password\":\"{{ NewUserPassword }}\"}"
