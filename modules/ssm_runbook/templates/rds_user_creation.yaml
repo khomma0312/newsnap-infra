@@ -18,6 +18,7 @@ mainSteps:
       Parameters:
         commands:
           - |
+            set -euo pipefail
             ADMIN_PASSWORD=$(aws secretsmanager get-secret-value \
               --secret-id ${admin_secret_arn} \
               --query SecretString \

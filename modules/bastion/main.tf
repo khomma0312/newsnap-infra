@@ -15,6 +15,8 @@ resource "aws_security_group" "bastion" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = { Name = "${var.app_name}-bastion" }
 }
 
 resource "aws_security_group_rule" "rds_from_bastion" {
@@ -40,6 +42,8 @@ resource "aws_iam_role" "bastion" {
       Action    = "sts:AssumeRole"
     }]
   })
+
+  tags = { Name = "${var.app_name}-bastion" }
 }
 
 resource "aws_iam_role_policy_attachment" "bastion_ssm" {
@@ -71,6 +75,7 @@ resource "aws_iam_role_policy" "bastion_secretsmanager" {
 resource "aws_iam_instance_profile" "bastion" {
   name = "${var.app_name}-bastion"
   role = aws_iam_role.bastion.name
+  tags = { Name = "${var.app_name}-bastion" }
 }
 
 # ── EC2 ────────────────────────────────────────────────────────────────────────
@@ -85,7 +90,7 @@ resource "aws_instance" "bastion" {
 
   user_data = <<-EOF
     #!/bin/bash
-    dnf install -y postgresql15 jq
+    dnf install -y postgresql16 jq
   EOF
 
   user_data_replace_on_change = true
@@ -93,4 +98,6 @@ resource "aws_instance" "bastion" {
   metadata_options {
     http_tokens = "required" # IMDSv2
   }
+
+  tags = { Name = "${var.app_name}-bastion" }
 }
