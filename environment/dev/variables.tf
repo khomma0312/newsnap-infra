@@ -1,3 +1,8 @@
+variable "backend_bucket_name" {
+  description = "Terraformの状態ファイルを保存するS3バケット名"
+  type        = string
+}
+
 variable "app_name" {
   description = "アプリケーション名"
   type        = string
