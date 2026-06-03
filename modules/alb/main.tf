@@ -25,12 +25,13 @@ resource "aws_lb_listener" "https" {
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.acm_certificate_arn
 
-  # デフォルトは403。X-Custom-Headerが一致するリクエスト（=CloudFront経由）のみ許可する
+  # デフォルトは400。X-Custom-Headerが一致するリクエスト（=CloudFront経由）のみ許可する
+  # 403にするとCloudFrontのcustom_error_response（S3の403をSPAにリダイレクトする設定）と競合するため400を使用
   default_action {
     type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
-      status_code  = "403"
+      status_code  = "400"
     }
   }
 }
