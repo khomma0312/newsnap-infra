@@ -5,6 +5,10 @@ on:
     branches:
     - "develop"
     - "main"
+    paths:
+    - "environment/**"
+    - "modules/**"
+    - ".github/workflows/deploy.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
