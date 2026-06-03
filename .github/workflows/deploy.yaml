@@ -30,7 +30,7 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
       with:
@@ -51,7 +51,7 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -81,7 +81,7 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
