@@ -21,7 +21,6 @@ permissions:
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}       # AWS CLI / configure-aws-credentials 用
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
-  TF_VAR_backend_bucket_name: ${{ vars.BACKEND_BUCKET_NAME }}
   TF_VAR_app_name: ${{ vars.APP_NAME }}
   TF_VAR_zone_domain: ${{ vars.ZONE_DOMAIN }}
   TF_VAR_db_name: ${{ vars.DB_NAME }}
