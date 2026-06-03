@@ -49,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
+    outputs:
+      has_changes: ${{ steps.plan.outputs.has_changes }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
@@ -65,9 +67,17 @@ jobs:
       run: terraform init
       working-directory: ${{ env.TF_DIR }}
     - name: terraform plan
-      run: terraform plan -out=tfplan
+      id: plan
+      run: |
+        set +e
+        terraform plan -out=tfplan -detailed-exitcode
+        EXIT_CODE=$?
+        set -e
+        if [ $EXIT_CODE -eq 1 ]; then exit 1; fi
+        echo "has_changes=$([ $EXIT_CODE -eq 2 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
       working-directory: ${{ env.TF_DIR }}
     - name: Upload plan file
+      if: steps.plan.outputs.has_changes == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: tfplan
@@ -78,6 +88,7 @@ jobs:
     name: Apply Terraform
     runs-on: ubuntu-latest
     needs: plan
+    if: needs.plan.outputs.has_changes == 'true'
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     steps:
     - name: Checkout code
