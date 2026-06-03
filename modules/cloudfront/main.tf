@@ -38,6 +38,7 @@ resource "aws_cloudfront_distribution" "main" {
     domain_name              = var.s3_bucket_regional_domain_name
     origin_id                = "s3-frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.main.id
+    origin_path              = "/current"
   }
 
   origin {
