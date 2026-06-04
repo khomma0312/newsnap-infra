@@ -1,3 +1,25 @@
+resource "aws_cloudfront_function" "path_rewrite" {
+  name    = "${var.app_name}-path-rewrite"
+  runtime = "cloudfront-js-2.0"
+  comment = "Next.js static export (trailingSlash): /path → /path/index.html"
+  publish = true
+
+  code = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+
+      if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+      } else if (!uri.split('/').pop().includes('.')) {
+        request.uri += '/index.html';
+      }
+
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_origin_access_control" "main" {
   name                              = "${var.app_name}-oac"
   origin_access_control_origin_type = "s3"
@@ -67,6 +89,11 @@ resource "aws_cloudfront_distribution" "main" {
     forwarded_values {
       query_string = false
       cookies { forward = "none" }
+    }
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.path_rewrite.arn
     }
   }
 
