@@ -117,7 +117,8 @@ data "aws_iam_policy_document" "bedrock_invoke" {
     ]
     resources = [
       "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-6",
-      "arn:aws:bedrock:us-east-1::inference-profile/us.anthropic.claude-sonnet-4-6",
+      "arn:aws:bedrock:*::inference-profile/us.anthropic.claude-sonnet-4-6",
+      "arn:aws:bedrock:*:*:inference-profile/global.anthropic.claude-sonnet-4-6",
     ]
   }
 }
