@@ -63,3 +63,9 @@ terraform plan
 ```bash
 terraform apply
 ```
+
+## 今後追加したい機能
+- Amazon Inspectorによる定期リポジトリスキャン
+- Security Hubを導入してセキュリティのベストプラクティスに沿った構成になっているかを定期確認・重要度HIGH以上のものはEventBridge, SMSなどで通知
+- サービスの死活監視、バックエンドのメトリクス監視
+- SSL証明書の期限前自動通知
