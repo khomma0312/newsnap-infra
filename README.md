@@ -46,6 +46,19 @@ newsnap-infra/
 
 詳細は [`infra-spec.md`](./infra-spec.md) を参照。
 
+## 初回インフラセットアップの流れ
+1. Bedrockで必要なモデルにフォーム送信して有効化しておく。
+2. ECSタスク定義をダミーで一旦作る。
+3. Github Actions用のOIDC設定、IAMロールをマネコンで作る。
+4. インフラ側のGitHub Actionsに必要な環境変数・シークレットを入れる。
+5. GitHub Actionsにてdeploy.yamlを実行し、Terraformでインフラを一括構築する。
+6. アプリ側のGitHub Actionsに必要な環境変数・シークレットを入れる。
+7. NewsAPIのキーを`/<env>-newsnap/app/news_api_key`のSSMパラメータストアに登録する。
+8. migration.yamlのAction(アプリ側リポジトリ)で、RDSにマイグレーションを実行する。
+9. SSM Runbookを使って、アプリ用DBユーザーを作る。(踏み台が起動していることを確認した上で実行)作成したユーザー情報はSecrets Managerに自動格納されるので、そこから確認可能。
+10. アプリ側のGitHub Actionsを実行して、アプリをデプロイする。
+11. アプリの動作確認
+
 ## 使い方
 
 適用したい環境のディレクトリに移動し、モジュールインストールなど初期化をする。
