@@ -77,7 +77,7 @@ resource "aws_ssm_parameter" "cognito_client_id" {
 resource "aws_ssm_parameter" "cognito_domain" {
   name  = "/${var.app_name}/cognito/domain"
   type  = "String"
-  value = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.name}.amazoncognito.com"
+  value = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.region}.amazoncognito.com"
 }
 
 resource "aws_ssm_parameter" "cognito_redirect_uri" {

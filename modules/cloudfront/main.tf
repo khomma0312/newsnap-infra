@@ -1,3 +1,25 @@
+resource "aws_cloudfront_function" "path_rewrite" {
+  name    = "${var.app_name}-path-rewrite"
+  runtime = "cloudfront-js-2.0"
+  comment = "Next.js static export (trailingSlash): /path → /path/index.html"
+  publish = true
+
+  code = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+
+      if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+      } else if (!uri.split('/').pop().includes('.')) {
+        request.uri += '/index.html';
+      }
+
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_origin_access_control" "main" {
   name                              = "${var.app_name}-oac"
   origin_access_control_origin_type = "s3"
@@ -38,6 +60,7 @@ resource "aws_cloudfront_distribution" "main" {
     domain_name              = var.s3_bucket_regional_domain_name
     origin_id                = "s3-frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.main.id
+    origin_path              = "/current"
   }
 
   origin {
@@ -67,6 +90,11 @@ resource "aws_cloudfront_distribution" "main" {
       query_string = false
       cookies { forward = "none" }
     }
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.path_rewrite.arn
+    }
   }
 
   ordered_cache_behavior {
@@ -85,6 +113,12 @@ resource "aws_cloudfront_distribution" "main" {
     min_ttl     = 0
     default_ttl = 0
     max_ttl     = 0
+  }
+
+  custom_error_response {
+    error_code         = 403
+    response_code      = 200
+    response_page_path = "/index.html"
   }
 
   custom_error_response {

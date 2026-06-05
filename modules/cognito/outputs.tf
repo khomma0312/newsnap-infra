@@ -1,6 +1,6 @@
 output "user_pool_id" { value = aws_cognito_user_pool.main.id }
 output "client_id" { value = aws_cognito_user_pool_client.main.id }
-output "domain" { value = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.name}.amazoncognito.com" }
+output "domain" { value = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${data.aws_region.current.region}.amazoncognito.com" }
 
 output "client_secret_arn" { value = aws_secretsmanager_secret.cognito_client_secret.arn }
 

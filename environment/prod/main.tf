@@ -13,18 +13,18 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "newsnap-dev-tfstate-113244625788-ap-northeast-1-an"
+    bucket = "newsnap-prod-tfstate-113244625788-ap-northeast-1-an"
     key    = "newsnap/terraform.tfstate"
     region = "ap-northeast-1"
   }
 }
 
 locals {
-  app_name      = "dev-${var.app_name}"
+  app_name      = "prod-${var.app_name}"
   aws_region    = var.aws_region
   zone_domain   = var.zone_domain
-  domain        = "dev.${var.zone_domain}"
-  api_domain    = "api.dev.${var.zone_domain}"
+  domain        = var.zone_domain
+  api_domain    = "api.${var.zone_domain}"
   db_name       = var.db_name
   db_admin_user = var.db_admin_user
 }
@@ -34,7 +34,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Environment = "dev"
+      Environment = "prod"
       Application = "newsnap"
       ManagedBy   = "terraform"
     }
@@ -47,7 +47,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Environment = "dev"
+      Environment = "prod"
       Application = "newsnap"
       ManagedBy   = "terraform"
     }
@@ -171,15 +171,6 @@ module "bastion_scheduler" {
 
   app_name            = local.app_name
   bastion_instance_id = module.bastion.instance_id
-}
-
-# ── RDS Stop Scheduler（dev only: 毎週月曜 00:00 JST に自動停止）─────────────────
-
-module "rds_scheduler" {
-  source = "../../modules/rds_scheduler"
-
-  app_name               = local.app_name
-  db_instance_identifier = module.rds.db_instance_identifier
 }
 
 # ── ECS ──────────────────────────────────────────────────────────────────────

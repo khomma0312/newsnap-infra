@@ -1,37 +1,31 @@
-name: Deploy
-
+name: CI
 on:
-  push:
-    branches:
-    - "develop"
-    - "main"
+  pull_request:
+    types: [opened, synchronize]
     paths:
     - "environment/**"
     - "modules/**"
-    - ".github/workflows/deploy.yaml"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+    - ".github/workflows/ci.yaml"
 
 permissions:
-  id-token: write
   contents: read
+  pull-requests: write
+  id-token: write
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION }}       # AWS CLI / configure-aws-credentials 用
+  AWS_REGION: ${{ vars.AWS_REGION }}
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
   TF_VAR_app_name: ${{ vars.APP_NAME }}
   TF_VAR_zone_domain: ${{ vars.ZONE_DOMAIN }}
   TF_VAR_db_name: ${{ vars.DB_NAME }}
   TF_VAR_db_admin_user: ${{ secrets.DB_ADMIN_USER }}
-  TF_DIR: ${{ github.ref == 'refs/heads/main' && 'environment/prod' || 'environment/dev' }}
+  TF_DIR: ${{ github.base_ref == 'main' && 'environment/prod' || 'environment/dev' }}
 
 jobs:
   lint:
     name: Lint Terraform
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
+    environment: ${{ github.base_ref == 'main' && 'Production' || 'Development' }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
@@ -52,7 +46,7 @@ jobs:
     name: Plan Terraform
     runs-on: ubuntu-latest
     needs: lint
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
+    environment: ${{ github.base_ref == 'main' && 'Production' || 'Development' }}
     outputs:
       has_changes: ${{ steps.plan.outputs.has_changes }}
     steps:
@@ -75,46 +69,40 @@ jobs:
       id: plan
       run: |
         set +e
-        terraform plan -out=tfplan -detailed-exitcode
+        terraform plan -detailed-exitcode
         EXIT_CODE=$?
         set -e
         if [ $EXIT_CODE -eq 1 ]; then exit 1; fi
         echo "has_changes=$([ $EXIT_CODE -eq 2 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
       working-directory: ${{ env.TF_DIR }}
-    - name: Upload plan file
-      if: steps.plan.outputs.has_changes == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: tfplan
-        path: ${{ env.TF_DIR }}/tfplan
-        retention-days: 7
 
-  apply:
-    name: Apply Terraform
+  review:
     runs-on: ubuntu-latest
     needs: plan
     if: needs.plan.outputs.has_changes == 'true'
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v6
-      with:
-        role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
-        aws-region: ${{ env.AWS_REGION }}
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v4
-      with:
-        terraform_version: "~1.12"
-    - name: terraform init
-      run: terraform init
-      working-directory: ${{ env.TF_DIR }}
-    - name: Download plan file
-      uses: actions/download-artifact@v4
-      with:
-        name: tfplan
-        path: ${{ env.TF_DIR }}
-    - name: terraform apply
-      run: terraform apply tfplan
-      working-directory: ${{ env.TF_DIR }}
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Please review this pull request with a focus on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Security implications
+            - Performance considerations
+
+            Note: The PR branch is already checked out in the current working directory.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
+
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
