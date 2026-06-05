@@ -67,3 +67,15 @@ variable "security_group_id" {
   description = "ECSタスクに割り当てるセキュリティグループID"
   type        = string
 }
+
+variable "min_task_count" {
+  description = "ECS Auto Scaling の最小タスク数"
+  type        = number
+  default     = 1
+}
+
+variable "max_task_count" {
+  description = "ECS Auto Scaling の最大タスク数"
+  type        = number
+  default     = 6
+}

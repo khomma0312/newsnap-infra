@@ -193,6 +193,7 @@ module "ecs" {
   cognito_redirect_uri_param_arn = module.cognito.redirect_uri_param_arn
   frontend_url_param_arn         = module.cognito.frontend_url_param_arn
   security_group_id              = module.vpc.ecs_security_group_id
+  min_task_count                 = 2 # prod環境は常に2タスク稼働させる
 }
 
 # ── ECS Migration ────────────────────────────────────────────────────────────
