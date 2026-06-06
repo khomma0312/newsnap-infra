@@ -45,7 +45,7 @@ newsnap-infra/
 
 ## インフラ構成図
 
-![](./newsnap-architecture.drawio)
+![](./newsnap-architecture.drawio.png)
 
 ## 初回インフラセットアップの流れ
 1. Bedrockで必要なモデルにフォーム送信して有効化しておく。
