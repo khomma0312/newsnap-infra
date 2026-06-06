@@ -38,13 +38,14 @@ newsnap-infra/
 │   ├── ecs_migration/          # DBマイグレーション用ECSタスク
 │   ├── bastion/                # 踏み台EC2 (Session Manager経由でアクセス)
 │   ├── bastion_scheduler/      # Bastion自動停止スケジューラ (毎日23:00 JST)
-│   ├── ssm_runbook/            # SSM Automation: DBユーザー作成Runbook
-│   └── iam/                    # CI/CD用IAMポリシー定義 (JSONファイル)
-└── iam/
-    └── cicd-terraform.json     # Terraform CI/CD実行用IAMポリシー
+│   └── ssm_runbook/            # SSM Automation: DBユーザー作成Runbook
 ```
 
 詳細は [`infra-spec.md`](./infra-spec.md) を参照。
+
+## インフラ構成図
+
+![](./newsnap-architecture.drawio)
 
 ## 初回インフラセットアップの流れ
 1. Bedrockで必要なモデルにフォーム送信して有効化しておく。
