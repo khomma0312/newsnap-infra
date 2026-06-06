@@ -13,7 +13,7 @@ resource "aws_ecs_service" "backend" {
   name            = "${var.app_name}-backend"
   cluster         = aws_ecs_cluster.main.id
   task_definition = data.aws_ecs_task_definition.backend.arn
-  desired_count   = 1
+  desired_count   = var.min_task_count # 初期値を min に合わせる
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -26,6 +26,10 @@ resource "aws_ecs_service" "backend" {
     target_group_arn = var.alb_target_group
     container_name   = "backend"
     container_port   = 3001
+  }
+
+  lifecycle {
+    ignore_changes = [desired_count] # 以後は Auto Scaling に委ねる
   }
 }
 
@@ -131,5 +135,89 @@ resource "aws_iam_policy" "bedrock_invoke" {
 resource "aws_iam_role_policy_attachment" "ecs_task_bedrock" {
   role       = aws_iam_role.ecs_task.name
   policy_arn = aws_iam_policy.bedrock_invoke.arn
+}
+
+# ── Auto Scaling ───────────────────────────────────────────────────────────────
+
+resource "aws_appautoscaling_target" "ecs_backend" {
+  min_capacity       = var.min_task_count
+  max_capacity       = var.max_task_count
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.backend.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "scale_out" {
+  name               = "${var.app_name}-backend-scale-out"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_backend.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_backend.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_backend.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 60
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "scale_in" {
+  name               = "${var.app_name}-backend-scale-in"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_backend.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_backend.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_backend.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  alarm_name          = "${var.app_name}-backend-cpu-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 70
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.backend.name
+  }
+
+  alarm_actions = [aws_appautoscaling_policy.scale_out.arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_low" {
+  alarm_name          = "${var.app_name}-backend-cpu-low"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 40
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.backend.name
+  }
+
+  alarm_actions = [aws_appautoscaling_policy.scale_in.arn]
 }
 
