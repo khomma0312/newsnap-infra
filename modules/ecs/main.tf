@@ -13,7 +13,7 @@ resource "aws_ecs_service" "backend" {
   name            = "${var.app_name}-backend"
   cluster         = aws_ecs_cluster.main.id
   task_definition = data.aws_ecs_task_definition.backend.arn
-  desired_count   = 1
+  desired_count   = var.min_task_count # 初期値を min に合わせる
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -26,6 +26,10 @@ resource "aws_ecs_service" "backend" {
     target_group_arn = var.alb_target_group
     container_name   = "backend"
     container_port   = 3001
+  }
+
+  lifecycle {
+    ignore_changes = [desired_count] # 以後は Auto Scaling に委ねる
   }
 }
 
