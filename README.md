@@ -78,6 +78,11 @@ terraform plan
 terraform apply
 ```
 
+## 工夫した点
+- ロールバック可能にするため、GitコミットハッシュによるECRイメージのタグ付け・S3のフォルダ名付け
+- DBのセットアップ簡略化（マイグレーション用ワークフローの作成、DBユーザー作成用ランブックの作成）
+- Dockerfileでマルチステージビルドを使い、イメージを軽量化([アプリ側リポジトリ参照](https://github.com/khomma0312/newsnap/blob/main/backend/docker/Dockerfile))
+
 ## 今後追加したい機能
 - Amazon Inspectorによる定期リポジトリスキャン
 - Security Hubを導入してセキュリティのベストプラクティスに沿った構成になっているかを定期確認・重要度HIGH以上のものはEventBridge, SMSなどで通知
