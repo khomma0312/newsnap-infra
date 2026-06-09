@@ -170,9 +170,6 @@ newsnap-infra/
 ```bash
 cd environment/dev
 
-# S3 バックエンドを使う場合は main.tf の backend ブロックをアンコメント
-# バケット名: newsnap-prod-tfstate-113244625788-ap-northeast-1-an
-
 terraform init
 terraform plan
 terraform apply
