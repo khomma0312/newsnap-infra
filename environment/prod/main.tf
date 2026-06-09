@@ -13,7 +13,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "newsnap-prod-tfstate-113244625788-ap-northeast-1-an"
+    bucket = "newsnap-prod-tfstate"
     key    = "newsnap/terraform.tfstate"
     region = "ap-northeast-1"
   }
