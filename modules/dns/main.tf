@@ -47,7 +47,7 @@ resource "aws_acm_certificate_validation" "cloudfront" {
 
 # ALB用ACM証明書（ap-northeast-1）
 resource "aws_acm_certificate" "alb" {
-  domain_name       = "api.${var.domain}"
+  domain_name       = "api-hoge.${var.domain}"
   validation_method = "DNS"
 
   lifecycle {
